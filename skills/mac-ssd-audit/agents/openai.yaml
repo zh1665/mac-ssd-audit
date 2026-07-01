@@ -1,0 +1,7 @@
+interface:
+  display_name: "Mac SSD Audit"
+  short_description: "Audit SSD writes, SMART health, and Codex logs"
+  brand_color: "#2563EB"
+  default_prompt: "Use $mac-ssd-audit to run the daily Mac SSD write audit and check Codex log recurrence."
+policy:
+  allow_implicit_invocation: true

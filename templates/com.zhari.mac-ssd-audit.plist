@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.zhari.mac-ssd-audit</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>__SCRIPT_PATH__</string>
+    <string>audit</string>
+    <string>--output-dir</string>
+    <string>__OUTPUT_DIR__</string>
+    <string>--state-dir</string>
+    <string>__STATE_DIR__</string>
+    <string>--install-missing-tools</string>
+    <string>--online-check</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>9</integer>
+    <key>Minute</key>
+    <integer>30</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__STATE_DIR__/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>__STATE_DIR__/launchd.err.log</string>
+</dict>
+</plist>
