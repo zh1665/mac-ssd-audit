@@ -667,6 +667,11 @@ def run_audit(args: argparse.Namespace) -> int:
     history_path = state_dir / "metrics.jsonl"
     records = load_jsonl(history_path)
     today = start.strftime("%Y-%m-%d")
+    report_name = f"SSD_Daily_Report_{today}.md"
+    report_path = output_dir / report_name
+    if args.skip_if_report_exists and report_path.exists():
+        print(json.dumps({"skipped": True, "reason": "report_exists", "report": str(report_path)}, ensure_ascii=False, indent=2))
+        return 0
     prev = previous_record(records, today)
     smart = collect_smart(args.install_missing_tools)
     path_specs = monitored_paths(home, args.extra_path)
@@ -706,8 +711,6 @@ def run_audit(args: argparse.Namespace) -> int:
     anomalies = detect_anomalies(record, avg7, growth_top20)
     record["growth_top20"] = growth_top20
     record["anomalies"] = anomalies
-    report_name = f"SSD_Daily_Report_{today}.md"
-    report_path = output_dir / report_name
     before_report = report_path.stat().st_size if report_path.exists() else 0
     record["self_audit"] = {"history_bytes_written": None, "report_bytes_written": None, "report_dir": str(output_dir)}
     draft_report = render_report(record, prev, avg7, avg30, growth_top20, anomalies)
@@ -742,6 +745,7 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--state-dir", default=str(Path.home() / ".local" / "state" / "mac-ssd-audit"))
     audit.add_argument("--extra-path", action="append", default=[])
     audit.add_argument("--candidate-limit", type=int, default=120, help="Keep only the largest growth-candidate directories in history.")
+    audit.add_argument("--skip-if-report-exists", action="store_true", help="Exit without scanning if today's report already exists.")
     audit.add_argument("--install-missing-tools", action="store_true", help="Install smartmontools with Homebrew if smartctl is missing.")
     audit.add_argument("--online-check", action="store_true", help="Check public GitHub issues for Codex logging/SSD problems.")
     audit.set_defaults(func=run_audit)
