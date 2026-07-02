@@ -449,22 +449,24 @@ def compare_path_growth(current: list[dict[str, Any]], previous: dict[str, Any] 
         for row in previous.get("path_sizes", []):
             if row.get("size_bytes") is not None:
                 prev_map[row.get("path")] = row.get("size_bytes")
-    growth = []
+    growth_by_path: dict[str, dict[str, Any]] = {}
     for row in current:
+        path = row.get("path")
         size = row.get("size_bytes")
-        prev = prev_map.get(row.get("path"))
-        if size is None or prev is None:
+        prev = prev_map.get(path)
+        if not path or size is None or prev is None:
             continue
         delta = size - prev
-        growth.append(
-            {
-                "path": row.get("path"),
-                "previous_bytes": prev,
-                "current_bytes": size,
-                "delta_bytes": delta,
-                "growth_percent": round(delta / prev * 100, 2) if prev else None,
-            }
-        )
+        item = {
+            "path": path,
+            "previous_bytes": prev,
+            "current_bytes": size,
+            "delta_bytes": delta,
+            "growth_percent": round(delta / prev * 100, 2) if prev else None,
+        }
+        if path not in growth_by_path or delta > growth_by_path[path]["delta_bytes"]:
+            growth_by_path[path] = item
+    growth = list(growth_by_path.values())
     return sorted(growth, key=lambda r: r["delta_bytes"], reverse=True)[:20]
 
 
