@@ -19,6 +19,8 @@
   </array>
   <key>RunAtLoad</key>
   <true/>
+  <key>StartInterval</key>
+  <integer>1800</integer>
   <key>StartCalendarInterval</key>
   <dict>
     <key>Hour</key>
