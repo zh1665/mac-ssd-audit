@@ -127,9 +127,10 @@ def parse_smartctl(text: str) -> dict[str, Any]:
         units = int(m.group(1).replace(",", ""))
         value = float(m.group(2))
         suffix = m.group(3)
-        factor = {"GB": 10**9, "TB": 10**12, "PB": 10**15}.get(suffix, 1)
         out["data_units_written"] = units
-        out["host_writes_bytes"] = int(value * factor)
+        # NVMe SMART data units are 512,000 bytes each. Use the exact unit
+        # count for deltas; the bracketed TB/GB value is rounded for humans.
+        out["host_writes_bytes"] = units * 512000
         out["host_writes_display"] = f"{value:g} {suffix}"
     return out
 
@@ -227,7 +228,11 @@ def monitored_paths(home: Path, extra_paths: list[str]) -> list[dict[str, str]]:
         ("Safari caches", home / "Library" / "Containers" / "com.apple.Safari" / "Data" / "Library" / "Caches"),
         ("Chrome cache", home / "Library" / "Caches" / "Google" / "Chrome"),
         ("Edge cache", home / "Library" / "Caches" / "Microsoft Edge"),
+        ("Edge updater", home / "Library" / "Application Support" / "Microsoft" / "EdgeUpdater"),
         ("Firefox cache", home / "Library" / "Caches" / "Firefox"),
+        ("Douyin container", home / "Library" / "Containers" / "com.bytedance.douyin.desktop"),
+        ("Douyin cache", home / "Library" / "Containers" / "com.bytedance.douyin.desktop" / "Data" / "Library" / "Application Support" / "抖音" / "Cache"),
+        ("draw.io updater", home / "Library" / "Caches" / "draw.io-updater"),
         ("R temp root", Path("/private/tmp")),
         ("System logs", Path("/private/var/log")),
         ("System temp folders", Path("/private/var/folders")),

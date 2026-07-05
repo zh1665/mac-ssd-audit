@@ -28,7 +28,7 @@ Media and Data Integrity Errors:    0
     assert parsed["available_spare_percent"] == 100
     assert parsed["power_on_hours"] == 36
     assert parsed["media_errors"] == 0
-    assert parsed["host_writes_bytes"] == 1_330_000_000_000
+    assert parsed["host_writes_bytes"] == 2_608_592 * 512_000
 
 
 def test_growth_top20():
