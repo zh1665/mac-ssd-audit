@@ -104,6 +104,45 @@ class DiagnosticTests(unittest.TestCase):
         t.poll()
         assert t.report(1)['observed_updates'] == 0
 
+    def test_unchanged_metadata_skips_full_state_read(self):
+        p = self.tmp_path / 'state'
+        p.write_text('{}')
+        t = m.StateTracker(p)
+        with patch.object(m, 'state_sample', wraps=m.state_sample) as sample:
+            t.poll()
+            for _ in range(20):
+                t.poll()
+            assert sample.call_count == 1
+            replace(p, b'{}')
+            t.poll()
+            assert sample.call_count == 2
+        assert t.report(1)['identical_bytes_updates'] == 1
+        p.rename(self.tmp_path / 'gone')
+        t.poll()
+        assert t.previous is None
+        assert t.report(1)['unavailable_samples'] == 1
+
+    def test_apple_nvme_smart_device_and_homebrew_fallback(self):
+        device = 'IOService:/AppleARMPE/arm-io/AppleANS3/NS_01@1'
+        data = {'serial_number': 'simulation',
+                'nvme_smart_health_information_log': {'data_units_written': 123}}
+        response = subprocess.CompletedProcess([], 0, json.dumps(data).encode(), b'')
+        with patch.object(m.shutil, 'which', return_value=None), \
+             patch.object(m.Path, 'is_file', side_effect=lambda: True), \
+             patch.object(m.subprocess, 'run', return_value=response) as run:
+            s = m.smart_sample(device)
+        assert s['bytes'] == 123 * 512000
+        assert run.call_args.args[0] == ['/opt/homebrew/bin/smartctl', '-i', '-A', '-j', '-d', 'nvme', device]
+        response.returncode = 2
+        with patch.object(m.shutil, 'which', return_value='/usr/bin/smartctl'), \
+             patch.object(m.subprocess, 'run', return_value=response):
+            assert 'error' in m.smart_sample(device)
+        with patch.object(m.shutil, 'which', return_value=None), \
+             patch.object(m.Path, 'is_file', return_value=False), \
+             patch.object(m.subprocess, 'run') as run:
+            assert 'error' in m.smart_sample(device)
+            run.assert_not_called()
+
 
     def test_log_storm_partial_lines_and_rotation(self):
         tmp_path = self.tmp_path

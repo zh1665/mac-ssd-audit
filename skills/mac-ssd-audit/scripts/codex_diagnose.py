@@ -55,6 +55,14 @@ class StateTracker:
                           sampled_updated_file_bytes=0, unavailable_samples=0)
 
     def poll(self):
+        # Unchanged metadata needs no repeated full JSON read/hash. A changed
+        # inode/mtime/ctime still samples equal-sized and identical rewrites.
+        if self.previous is not None:
+            try:
+                if signature(self.path) == self.previous['signature']:
+                    return
+            except OSError:
+                pass  # state_sample reports the error and breaks continuity.
         s = state_sample(self.path)
         if 'error' in s:
             self.stats['unavailable_samples'] += 1
@@ -255,9 +263,16 @@ def counter_delta(before, after):
 def smart_sample(device):
     executable = shutil.which('smartctl')
     if not executable:
+        executable = next((p for p in ('/opt/homebrew/bin/smartctl', '/usr/local/bin/smartctl')
+                           if Path(p).is_file()), None)
+    if not executable:
         return {'error': 'smartctl unavailable; nothing installed'}
     try:
-        p = subprocess.run([executable, '-a', '-j', device], capture_output=True, timeout=5, check=False)
+        # Read only identity and the NVMe health counter. -a also requests the
+        # error log, unsupported on some Apple SSDs, yielding exit bit 2 even
+        # when the Host Writes field is available.
+        p = subprocess.run([executable, '-i', '-A', '-j', '-d', 'nvme', device],
+                           capture_output=True, timeout=5, check=False)
         if p.returncode & 7:
             return {'error': 'SMART command failed'}
         data = json.loads(p.stdout)

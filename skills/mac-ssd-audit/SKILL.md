@@ -34,6 +34,20 @@ Audit Codex log status without changing it:
 python3 scripts/mac_ssd_audit.py guard-codex-logs --codex-home ~/.codex
 ```
 
+For an explicitly requested short write investigation, use the optional
+source-read-only diagnostic (no guard/cleanup):
+
+```bash
+python3 scripts/mac_ssd_audit.py diagnose-codex --seconds 30 --interval 0.25
+```
+
+Select a main-process PID and desktop log explicitly when measuring process I/O
+or the inactive-window event rate. For SMART, use the complete device path from
+`smartctl --scan` with `--smart-device`; existing Homebrew tools are found without
+installation. Keep file metadata/content observations, process bytes and
+whole-device Host Writes separate. See the repository README for options and
+limitations. Do not infer a fix or crash causation from a zero/low short sample.
+
 Explicitly restore the Codex SQLite guard and remove existing non-essential rows:
 
 ```bash
