@@ -763,6 +763,16 @@ def build_parser() -> argparse.ArgumentParser:
     guard.add_argument("--vacuum", action="store_true", help="Vacuum after deletion. Requires --apply.")
     guard.add_argument("--watch-seconds", type=int, default=0)
     guard.set_defaults(func=run_codex_guard)
+    diagnostic = sub.add_parser("diagnose-codex", help="Optional short source-read-only diagnostic; JSON to stdout.")
+    diagnostic.add_argument("--codex-home", default=str(Path.home() / ".codex"))
+    diagnostic.add_argument("--seconds", type=float, default=30)
+    diagnostic.add_argument("--interval", type=float, default=0.25)
+    diagnostic.add_argument("--log-file", action="append", default=[], help="Explicit desktop text log; repeatable.")
+    diagnostic.add_argument("--sqlite", action="store_true", help="Sample retained rows using bounded temporary DB/WAL copies.")
+    diagnostic.add_argument("--pid", type=int, help="Explicit macOS desktop main process PID.")
+    diagnostic.add_argument("--smart-device", help="Optional NVMe device, e.g. /dev/disk0; no installation or sudo.")
+    from codex_diagnose import run_diagnose
+    diagnostic.set_defaults(func=run_diagnose)
     return parser
 
 
